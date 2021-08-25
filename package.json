@@ -1,0 +1,13 @@
+{
+  "name": "shadow",
+  "version": "1.0.0",
+  "description": "A web components library by custom elements",
+  "main": "index.js",
+  "repository": "https://github.com/WesChiou/shadow.git",
+  "author": "Qiu Weishi <weishi@whut.edu.cn>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.32.0"
+  }
+}
