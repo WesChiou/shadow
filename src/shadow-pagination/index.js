@@ -94,15 +94,33 @@
     }
 
     set value(v) {
-      if (isNumeric(v)
-        && isNumeric(this.pages)
-        && v > 0
-        && v <= this.pages
-        && +this.#value !== +v
-      ) {
+      if (!isNumeric(v) || !isNumeric(this.pages) || +this.#value === +v) {
+        return;
+      }
+
+      if (v > 0 && v <= this.pages) {
         this.#value = v;
-        this.dispatchEvent(new Event('change'));
-        this.updateView();
+      } else if (v <= 0 && this.circular) {
+        this.#value = this.pages;
+      } else if (v > this.pages && this.circular) {
+        this.#value = 1;
+      } else {
+        return; // avoid dispatchEvent and updateView
+      }
+
+      this.dispatchEvent(new Event('change'));
+      this.updateView();
+    }
+
+    get circular() {
+      return this.hasAttribute('circular');
+    }
+
+    set circular(v) {
+      if (v) {
+        this.setAttribute('circular', '');
+      } else {
+        this.removeAttribute('circular');
       }
     }
 
