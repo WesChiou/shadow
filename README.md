@@ -1,7 +1,6 @@
 # shadow
-A web components library by custom elements(Only for learning at the beginning).
+A web components library by custom elements.
 
-- [ ] Tabs
-- [ ] JiuGong
-- [ ] Carousel
-- [ ] Menu
+- [ ] shadow-pagination
+- [ ] shadow-tabs
+- [ ] shadow-menu

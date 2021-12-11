@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>shadow-pagination demo</title>
+</head>
+<body>
+  <shadow-pagination id="shadow-pagination" pages="9"></shadow-pagination>
+  <input type="text" id="input">
+  <script src="./index.js"></script>
+  <script>
+    const shadowPagination = document.querySelector('shadow-pagination');
+    shadowPagination.addEventListener('change', (event) => {
+      console.log('change: ', event.target.value)
+    })
+  </script>
+</body>
+</html>
