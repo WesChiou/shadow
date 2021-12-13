@@ -4,54 +4,16 @@
     return !Number.isNaN(value - parseFloat(value));
   }
 
-  function createTemplate() {
-    const template = document.createElement('template');
-    template.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
-        #pages-box {
-          display: inline-block;
-        }
-        .page.active {
-          background-color: #ffffff;
-        }
-      </style>
-      <div>
-        <button data-page="first" class="first">&lt;&lt;</button>
-        <button data-page="prev" class="prev">&lt;</button>
-        <div id="pages-box"></div>
-        <button data-page="next" class="next">&gt;</button>
-        <button data-page="last" class="last">&gt;&gt;</button>
-      </div>
-    `;
-    return template;
-  }
-
-  function createPagesHTML(pages) {
-    let innerHTML = '';
-    if (isNumeric(pages)) {
-      for (let i = 1; i <= parseInt(pages, 10); i += 1) {
-        innerHTML += `<button data-page="${i}" class="page">${i}</button>`;
-      }
-    }
-    return innerHTML;
-  }
-
   class ShadowPagination extends HTMLElement {
     #value = 1;
 
     constructor() {
       super();
       const shadowRoot = this.attachShadow({ mode: 'open' });
-      shadowRoot.append(createTemplate().content.cloneNode(true));
-
-      this.elementPagesBox = shadowRoot.querySelector('#pages-box');
 
       shadowRoot.addEventListener('click', (event) => {
-        const currPage = event.target.dataset.page;
-        switch (currPage) {
+        const type = event.target.dataset.page;
+        switch (type) {
           case 'first':
             this.value = 1;
             this.dispatchEvent(new Event('firstpage'));
@@ -69,7 +31,7 @@
             this.dispatchEvent(new Event('lastpage'));
             break;
           default:
-            this.value = currPage;
+            this.value = type;
             break;
         }
       });
@@ -105,11 +67,11 @@
       } else if (v > this.pages && this.circular) {
         this.#value = 1;
       } else {
-        return; // avoid dispatchEvent and updateView
+        return; // avoid dispatchEvent and render
       }
 
       this.dispatchEvent(new Event('change'));
-      this.updateView();
+      this.render();
     }
 
     get circular() {
@@ -124,14 +86,37 @@
       }
     }
 
-    updateView() {
-      const pageElements = Array.from(this.elementPagesBox.children);
-      pageElements.forEach((v) => {
-        v.classList.remove('active');
-        if (v.dataset.page === `${this.value}`) {
-          v.classList.add('active');
+    render() {
+      const { pages, value } = this || {};
+
+      function makePages() {
+        let innerHTML = '';
+        if (isNumeric(pages)) {
+          for (let i = 1; i <= parseInt(pages, 10); i += 1) {
+            innerHTML += `<button data-page="${i}" class="page ${+value === i ? 'active' : ''}">${i}</button>`;
+          }
         }
-      });
+        return innerHTML;
+      }
+
+      const template = document.createElement('template');
+      template.innerHTML = `
+        <style>
+          :host { display: block; }
+          #pages-box { display: inline-block; }
+          .page.active { background-color: #ffffff; }
+        </style>
+        <div>
+          <button data-page="first" class="first">&lt;&lt;</button>
+          <button data-page="prev" class="prev">&lt;</button>
+          <div id="pages-box">${makePages()}</div>
+          <button data-page="next" class="next">&gt;</button>
+          <button data-page="last" class="last">&gt;&gt;</button>
+        </div>
+      `;
+
+      this.shadowRoot.innerHTML = '';
+      this.shadowRoot.append(template.content.cloneNode(true));
     }
 
     connectedCallback() {
@@ -147,13 +132,12 @@
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-      if (name === 'pages') {
-        this.elementPagesBox.innerHTML = createPagesHTML(this.pages);
-        this.updateView();
-      } else if (name === 'value') {
-        setTimeout(() => {
-          this.value = newValue;
-        });
+      if (name === 'value') {
+        this.value = newValue;
+      }
+
+      if (oldValue !== newValue) {
+        this.render();
       }
     }
 

@@ -4,10 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>shadow-pagination demo</title>
+  <style></style>
 </head>
 <body>
+  <ul>
+    <li>是否显示“第一页”</li>
+    <li>是否显示“最后一页”</li>
+    <li>是否显示“上一页”</li>
+    <li>是否显示“下一页”</li>
+    <li>“下一页” slot</li>
+    <li>“上一页” slot</li>
+    <li>“第一页” slot</li>
+    <li>“最后一页” slot</li>
+    <li>页码以其他非数字方式显示</li>
+    <li>显示省略...</li>
+  </ul>
   <shadow-pagination id="shadow-pagination" pages="9"></shadow-pagination>
-  <input type="text" id="input">
   <script src="./index.js"></script>
   <script>
     const shadowPagination = document.querySelector('shadow-pagination');
