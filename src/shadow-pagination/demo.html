@@ -14,12 +14,16 @@
     <li>是否显示“下一页” @done</li>
     <li>“上一页”智能模式 @done</li>
     <li>“下一页”智能模式 @done</li>
-    <li>“下一页” slot @doing</li>
-    <li>“上一页” slot @doing</li>
-    <li>“第一页” slot @doing</li>
-    <li>“最后一页” slot @doing</li>
-    <li>页码以其他非数字方式显示</li>
-    <li>显示省略...</li>
+    <li>“下一页” slot @done</li>
+    <li>“上一页” slot @done</li>
+    <li>“第一页” slot @done</li>
+    <li>“最后一页” slot @done</li>
+    <li>页码以其他非数字方式显示(注意：不支持使用attribute设置映射函数) @done</li>
+    <li>显示省略... @done</li>
+    <li>自定义省略符号</li>
+    <li>用户自定义样式</li>
+    <li>文档</li>
+    <li>测试</li>
   </ul>
 
   <shadow-pagination
@@ -31,13 +35,18 @@
     next-smart-mode="disabled"
     previous-smart-mode="disabled"
   >
-    <span slot="previous">previous page</span>
-    <span slot="next">next page</span>
+    <span slot="previous">previous</span>
+    <span slot="next">next</span>
+    <span slot="first">first</span>
+    <span slot="last">last</span>
   </shadow-pagination>
 
   <script src="./index.js"></script>
   <script>
     const shadowPagination = document.querySelector('shadow-pagination');
+
+    shadowPagination.pagesFormatFn = (page) => page < 10 ? '0' + page : page;
+
     shadowPagination.addEventListener('change', (event) => {
       console.log('change: ', event.target.value, typeof event.target.value)
     })

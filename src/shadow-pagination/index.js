@@ -4,17 +4,55 @@
     return !Number.isNaN(value - parseFloat(value));
   }
 
+  function pagination(current, last, diameter = 5, headSize = 1, tailSize = 1) {
+    const radius = Math.floor(diameter / 2);
+    const isEven = diameter % 2 === 0;
+
+    const visible = [];
+
+    for (let i = 1; i <= last; i += 1) {
+      if ((i <= headSize)
+        || (last - i < tailSize)
+        || (current <= radius && i <= diameter)
+        || (current >= last - radius && i > last - diameter)
+        || (!isEven && i - current >= -radius && i - current <= radius)
+        || (isEven && i - current >= -radius + 1 && i - current <= radius)
+      ) {
+        visible.push(i);
+      }
+    }
+
+    const result = [];
+
+    for (let i = 0; i < visible.length; i += 1) {
+      result.push(`${visible[i]}`);
+      if (visible[i + 1] && visible[i + 1] - visible[i] > 1) {
+        result.push('...');
+      }
+    }
+
+    return result;
+  }
+
   const SMART_MODE_ENUM = ['hidden', 'disabled'];
 
   class ShadowPagination extends HTMLElement {
     #value = 1;
+
+    #pagesFormatFn = null;
 
     constructor() {
       super();
       const shadowRoot = this.attachShadow({ mode: 'open' });
 
       shadowRoot.addEventListener('click', (event) => {
-        const button = event.target.closest('button');
+        let button;
+        const slot = event.composedPath().find((v) => v.tagName === 'SLOT');
+        if (slot) {
+          button = event.composedPath().find((v) => v.tagName === 'BUTTON' && v.dataset.of === 'shadow-pagination');
+        } else {
+          button = event.target.closest('button');
+        }
 
         if (!button || button.disabled) return;
 
@@ -160,6 +198,18 @@
       this.setAttribute('previous-smart-mode', v);
     }
 
+    get pagesFormatFn() {
+      return this.#pagesFormatFn;
+    }
+
+    set pagesFormatFn(fn) {
+      if (!fn || typeof fn !== 'function') {
+        return;
+      }
+      this.#pagesFormatFn = fn;
+      this.render();
+    }
+
     render() {
       const {
         count,
@@ -170,6 +220,7 @@
         hideNextButton,
         nextSmartMode,
         previousSmartMode,
+        pagesFormatFn,
       } = this || {};
 
       function makePreviousButton() {
@@ -182,7 +233,7 @@
           attr = previousSmartMode;
         }
 
-        return `<button data-page="previous" ${+value === 1 ? attr : ''}>
+        return `<button data-page="previous" data-of="shadow-pagination" ${+value === 1 ? attr : ''}>
                   <slot name="previous">&#706;</slot>
                 </button>`;
       }
@@ -190,9 +241,16 @@
       function makePages() {
         let innerHTML = '';
         if (isNumeric(count)) {
-          for (let i = 1; i <= parseInt(count, 10); i += 1) {
-            innerHTML += `<button data-page="${i}" class="page ${+value === i ? 'active' : ''}">${i}</button>`;
-          }
+          const pages = pagination(+value, +count);
+          pages.forEach((v) => {
+            if (isNumeric(v)) {
+              innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}">
+                              ${pagesFormatFn && typeof pagesFormatFn === 'function' ? pagesFormatFn(+v) : +v}
+                            </button>`;
+            } else if (v === '...') {
+              innerHTML += '<span>...</span>';
+            }
+          });
         }
         return innerHTML;
       }
@@ -207,7 +265,7 @@
           attr = nextSmartMode;
         }
 
-        return `<button data-page="next" ${+value === +count ? attr : ''}>
+        return `<button data-page="next" data-of="shadow-pagination" ${+value === +count ? attr : ''}>
                   <slot name="next">&#707;</slot>
                 </button>`;
       }
@@ -216,14 +274,14 @@
       template.innerHTML = `
         <style>
           :host { display: block; }
-          .page.active { background-color: #ffffff; }
+          .page.active { background-color: #fff; }
         </style>
         <div>
-          ${showFirstButton ? '<button data-page="first">&larrb;</button>' : ''}
+          ${showFirstButton ? '<button data-page="first" data-of="shadow-pagination"><slot name="first">&larrb;</slot></button>' : ''}
           ${makePreviousButton()}
           ${makePages()}⁨⁨
           ${makeNextButton()}
-          ${showLastButton ? '<button data-page="last">&rarrb;</button>' : ''}
+          ${showLastButton ? '<button data-page="last" data-of="shadow-pagination"><slot name="last">&rarrb;</slot></button>' : ''}
         </div>
       `;
 
