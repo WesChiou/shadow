@@ -31,10 +31,19 @@
       }
     }
 
+    if (result[0] && result[0] > 1) {
+      result.unshift('...');
+    }
+    if (result[result.length - 1] < last) {
+      result.push('...');
+    }
+
     return result;
   }
 
   const SMART_MODE_ENUM = ['hidden', 'disabled'];
+  const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis'];
+  ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
 
   class ShadowPagination extends HTMLElement {
     #value = 1;
@@ -198,6 +207,39 @@
       this.setAttribute('previous-smart-mode', v);
     }
 
+    get ellipsisStyle() {
+      return this.getAttribute('ellipsis-style');
+    }
+
+    set ellipsisStyle(v) {
+      this.setAttribute('ellipsis-style', v);
+    }
+
+    // TODO: 属性校验
+    get ellipsisDiameter() {
+      return this.getAttribute('ellipsis-diameter');
+    }
+
+    set ellipsisDiameter(v) {
+      this.setAttribute('ellipsis-diameter', v);
+    }
+
+    get ellipsisHeadsize() {
+      return this.getAttribute('ellipsis-headsize');
+    }
+
+    set ellipsisHeadsize(v) {
+      this.setAttribute('ellipsis-headsize', v);
+    }
+
+    get ellipsisTailsize() {
+      return this.getAttribute('ellipsis-tailsize');
+    }
+
+    set ellipsisTailsize(v) {
+      this.setAttribute('ellipsis-tailsize', v);
+    }
+
     get pagesFormatFn() {
       return this.#pagesFormatFn;
     }
@@ -220,7 +262,11 @@
         hideNextButton,
         nextSmartMode,
         previousSmartMode,
+        ellipsisStyle,
         pagesFormatFn,
+        ellipsisDiameter,
+        ellipsisHeadsize,
+        ellipsisTailsize,
       } = this || {};
 
       function makePreviousButton() {
@@ -233,7 +279,7 @@
           attr = previousSmartMode;
         }
 
-        return `<button data-page="previous" data-of="shadow-pagination" ${+value === 1 ? attr : ''}>
+        return `<button data-page="previous" data-of="shadow-pagination" part="previous" ${+value === 1 ? attr : ''}>
                   <slot name="previous">&#706;</slot>
                 </button>`;
       }
@@ -241,14 +287,23 @@
       function makePages() {
         let innerHTML = '';
         if (isNumeric(count)) {
-          const pages = pagination(+value, +count);
+          const diameter = isNumeric(ellipsisDiameter) ? ellipsisDiameter : 5;
+          const headsize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
+          const tailsize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
+          const pages = pagination(+value, +count, +diameter, +headsize, +tailsize);
           pages.forEach((v) => {
             if (isNumeric(v)) {
-              innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}">
+              innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}" part="page ${+value === +v ? 'active' : ''}">
                               ${pagesFormatFn && typeof pagesFormatFn === 'function' ? pagesFormatFn(+v) : +v}
                             </button>`;
             } else if (v === '...') {
-              innerHTML += '<span>...</span>';
+              let ellipsis = ELLIPSIS_STYLE_ENUM.default;
+              if (ELLIPSIS_STYLE_ENUM.includes(ellipsisStyle)) {
+                ellipsis = ellipsisStyle;
+              }
+
+              const text = ellipsis === 'ellipsis' ? '...' : '';
+              innerHTML += `<span part="ellipsis">${text}</span>`;
             }
           });
         }
@@ -265,7 +320,7 @@
           attr = nextSmartMode;
         }
 
-        return `<button data-page="next" data-of="shadow-pagination" ${+value === +count ? attr : ''}>
+        return `<button data-page="next" data-of="shadow-pagination" part="next" ${+value === +count ? attr : ''}>
                   <slot name="next">&#707;</slot>
                 </button>`;
       }
@@ -277,24 +332,16 @@
           .page.active { background-color: #fff; }
         </style>
         <div>
-          ${showFirstButton ? '<button data-page="first" data-of="shadow-pagination"><slot name="first">&larrb;</slot></button>' : ''}
+          ${showFirstButton ? '<button data-page="first" data-of="shadow-pagination" part="first"><slot name="first">&larrb;</slot></button>' : ''}
           ${makePreviousButton()}
           ${makePages()}⁨⁨
           ${makeNextButton()}
-          ${showLastButton ? '<button data-page="last" data-of="shadow-pagination"><slot name="last">&rarrb;</slot></button>' : ''}
+          ${showLastButton ? '<button data-page="last" data-of="shadow-pagination" part="last"><slot name="last">&rarrb;</slot></button>' : ''}
         </div>
       `;
 
       this.shadowRoot.innerHTML = '';
       this.shadowRoot.append(template.content.cloneNode(true));
-    }
-
-    connectedCallback() {
-
-    }
-
-    disconnectedCallback() {
-
     }
 
     static get observedAttributes() {
@@ -307,6 +354,10 @@
         'hide-next-button',
         'next-smart-mode',
         'previous-smart-mode',
+        'ellipsis-style',
+        'ellipsis-diameter',
+        'ellipsis-headsize',
+        'ellipsis-tailsize',
       ];
     }
 
@@ -318,10 +369,6 @@
       if (oldValue !== newValue) {
         this.render();
       }
-    }
-
-    adoptedCallback() {
-
     }
   }
 

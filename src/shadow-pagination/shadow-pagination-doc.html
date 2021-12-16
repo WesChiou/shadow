@@ -3,8 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>shadow-pagination demo</title>
-  <style></style>
+  <title>shadow-pagination-doc</title>
+  <style>
+    #shadow-pagination::part(active) {
+      font-weight: bold;
+    }
+    #shadow-pagination::part(first),
+    #shadow-pagination::part(previous),
+    #shadow-pagination::part(page),
+    #shadow-pagination::part(next),
+    #shadow-pagination::part(last) {
+      border: none;
+      background-color: #fff;
+    }
+  </style>
 </head>
 <body>
   <ul>
@@ -20,20 +32,31 @@
     <li>“最后一页” slot @done</li>
     <li>页码以其他非数字方式显示(注意：不支持使用attribute设置映射函数) @done</li>
     <li>显示省略... @done</li>
-    <li>自定义省略符号</li>
-    <li>用户自定义样式</li>
+    <li>自定义省略符号
+      <ul>
+        <li>ellipsis-style [enum] hidden, ellipsis[default] @done</li>
+        <li>ellipsis-diameter [number] @done</li>
+        <li>ellipsis-headsize [number] @done</li>
+        <li>ellipsis-tailsize [number] @done</li>
+      </ul>
+    </li>
+    <li>用户自定义样式 @done</li>
     <li>文档</li>
-    <li>测试</li>
+    <li>用例，测试</li>
   </ul>
 
   <shadow-pagination
     id="shadow-pagination"
-    count="9"
+    count="20"
     circular
     show-first-button
     show-last-button
     next-smart-mode="disabled"
     previous-smart-mode="disabled"
+    ellipsis-style="hidden"
+    ellipsis-diameter="5"
+    ellipsis-headsize="0"
+    ellipsis-tailsize="0"
   >
     <span slot="previous">previous</span>
     <span slot="next">next</span>
@@ -41,7 +64,7 @@
     <span slot="last">last</span>
   </shadow-pagination>
 
-  <script src="./index.js"></script>
+  <script src="./shadow-pagination.js"></script>
   <script>
     const shadowPagination = document.querySelector('shadow-pagination');
 
