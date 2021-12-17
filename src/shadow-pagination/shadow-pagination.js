@@ -4,37 +4,88 @@
     return !Number.isNaN(value - parseFloat(value));
   }
 
-  function pagination(current, last, diameter = 5, headSize = 1, tailSize = 1) {
-    const radius = Math.floor(diameter / 2);
-    const isEven = diameter % 2 === 0;
+  function pagination(currentPage, pageCount, {
+    diameter = 5,
+    headSize = 1,
+    tailSize = 1,
+    blurSize = 0,
+  } = {}) {
+    // https://stackoverflow.com/questions/10834796/validate-that-a-string-is-a-positive-integer
+    function isNonNegativeInteger(n) {
+      // eslint-disable-next-line
+      return n >>> 0 === parseFloat(n);
+    }
+    function isPositiveInteger(n) {
+      return isNonNegativeInteger(n) && n > 0;
+    }
+    // validation
+    if (!isPositiveInteger(pageCount)
+      || !isNonNegativeInteger(currentPage)
+      || parseInt(currentPage, 10) > parseInt(pageCount, 10)
+    ) {
+      return [];
+    }
+    // correct parameters
+    const CURR = parseInt(currentPage, 10);
+    const COUNT = parseInt(pageCount, 10);
+    const DIAMETER = isPositiveInteger(diameter) && diameter <= COUNT && diameter > 1
+      ? +diameter
+      : 5;
+    const HEADSIZE = isNonNegativeInteger(headSize) && headSize <= COUNT ? +headSize : 1;
+    const TAILSIZE = isNonNegativeInteger(tailSize) && tailSize <= COUNT ? +tailSize : 1;
+    const BLURSIZE = isNonNegativeInteger(blurSize) && blurSize <= COUNT ? +blurSize : 0;
 
-    const visible = [];
+    const FIRST = 1;
+    const radius = Math.floor(DIAMETER / 2);
+    const isEven = DIAMETER % 2 === 0;
 
-    for (let i = 1; i <= last; i += 1) {
-      if ((i <= headSize)
-        || (last - i < tailSize)
-        || (current <= radius && i <= diameter)
-        || (current >= last - radius && i > last - diameter)
-        || (!isEven && i - current >= -radius && i - current <= radius)
-        || (isEven && i - current >= -radius + 1 && i - current <= radius)
+    const set = new Set();
+
+    for (let i = FIRST; i <= HEADSIZE && i <= COUNT; i += 1) {
+      set.add(i);
+    }
+    for (let i = Math.max(CURR - DIAMETER, FIRST); i <= CURR + DIAMETER && i <= COUNT; i += 1) {
+      if ((CURR <= radius && i <= DIAMETER)
+        || (CURR >= COUNT - radius && i > COUNT - DIAMETER)
+        || (i - CURR >= -radius + isEven && i - CURR <= radius)
       ) {
-        visible.push(i);
+        set.add(i);
       }
     }
+    for (let i = COUNT - TAILSIZE + 1; i <= COUNT && i >= FIRST; i += 1) {
+      set.add(i);
+    }
 
+    const tmp = Array.from(set);
     const result = [];
 
-    for (let i = 0; i < visible.length; i += 1) {
-      result.push(`${visible[i]}`);
-      if (visible[i + 1] && visible[i + 1] - visible[i] > 1) {
+    if (tmp[0] && tmp[0] > FIRST && tmp[0] - FIRST <= BLURSIZE) {
+      for (let i = FIRST; i < tmp[0]; i += 1) {
+        result.push(i);
+      }
+    } else if (tmp[0] && tmp[0] > FIRST) {
+      result.push('...');
+    }
+    for (let i = 0; i < tmp.length; i += 1) {
+      const it = tmp[i];
+      result.push(it);
+
+      const next = tmp[i + 1];
+      if (next === undefined) break;
+
+      if (next - it > 1 && next - it - 1 <= BLURSIZE) {
+        for (let j = it + 1; j < next; j += 1) {
+          result.push(j);
+        }
+      } else if (next - it > 1) {
         result.push('...');
       }
     }
-
-    if (result[0] && result[0] > 1) {
-      result.unshift('...');
-    }
-    if (result[result.length - 1] < last) {
+    if (tmp[tmp.length - 1] < COUNT && COUNT - tmp[tmp.length - 1] <= BLURSIZE) {
+      for (let i = tmp[tmp.length - 1] + 1; i <= COUNT; i += 1) {
+        result.push(i);
+      }
+    } else if (tmp[tmp.length - 1] < COUNT) {
       result.push('...');
     }
 
@@ -240,6 +291,14 @@
       this.setAttribute('ellipsis-tailsize', v);
     }
 
+    get ellipsisBlursize() {
+      return this.getAttribute('ellipsis-blursize');
+    }
+
+    set ellipsisBlursize(v) {
+      this.setAttribute('ellipsis-blursize', v);
+    }
+
     get pagesFormatFn() {
       return this.#pagesFormatFn;
     }
@@ -267,6 +326,7 @@
         ellipsisDiameter,
         ellipsisHeadsize,
         ellipsisTailsize,
+        ellipsisBlursize,
       } = this || {};
 
       function makePreviousButton() {
@@ -288,9 +348,15 @@
         let innerHTML = '';
         if (isNumeric(count)) {
           const diameter = isNumeric(ellipsisDiameter) ? ellipsisDiameter : 5;
-          const headsize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
-          const tailsize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
-          const pages = pagination(+value, +count, +diameter, +headsize, +tailsize);
+          const headSize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
+          const tailSize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
+          const blurSize = isNumeric(ellipsisBlursize) ? ellipsisBlursize : 0;
+          const pages = pagination(value, count, {
+            diameter,
+            headSize,
+            tailSize,
+            blurSize,
+          });
           pages.forEach((v) => {
             if (isNumeric(v)) {
               innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}" part="page ${+value === +v ? 'active' : ''}">
@@ -358,6 +424,7 @@
         'ellipsis-diameter',
         'ellipsis-headsize',
         'ellipsis-tailsize',
+        'ellipsis-blursize',
       ];
     }
 

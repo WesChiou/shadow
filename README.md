@@ -1,6 +1,6 @@
 # shadow
 A web components library by custom elements.
 
-- [ ] shadow-pagination
+- [x] shadow-pagination
 - [ ] shadow-tabs
 - [ ] shadow-menu
