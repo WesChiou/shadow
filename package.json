@@ -1,13 +1,20 @@
 {
   "name": "shadow",
   "version": "1.0.0",
+  "scripts": {
+    "build": "babel src -d lib"
+  },
   "description": "A web components library by custom elements",
   "main": "index.js",
   "repository": "https://github.com/WesChiou/shadow.git",
   "author": "Qiu Weishi <weishi@whut.edu.cn>",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
-    "eslint": "^7.32.0"
+    "@babel/cli": "^7.16.0",
+    "@babel/core": "^7.16.5",
+    "@babel/preset-env": "^7.16.5",
+    "eslint": "^8.4.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3"
   }
 }
