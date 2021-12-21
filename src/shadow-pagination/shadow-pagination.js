@@ -93,7 +93,7 @@
   }
 
   const SMART_MODE_ENUM = ['hidden', 'disabled'];
-  const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis'];
+  const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis', 'no-ellipsis'];
   ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
 
   class ShadowPagination extends HTMLElement {
@@ -346,28 +346,33 @@
 
       function makePages() {
         let innerHTML = '';
+        let ellipsis = ELLIPSIS_STYLE_ENUM.default;
+        if (ELLIPSIS_STYLE_ENUM.includes(ellipsisStyle)) {
+          ellipsis = ellipsisStyle;
+        }
+
         if (isNumeric(count)) {
-          const diameter = isNumeric(ellipsisDiameter) ? ellipsisDiameter : 5;
-          const headSize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
-          const tailSize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
-          const blurSize = isNumeric(ellipsisBlursize) ? ellipsisBlursize : 0;
-          const pages = pagination(value, count, {
-            diameter,
-            headSize,
-            tailSize,
-            blurSize,
-          });
+          let pages = [];
+          if (ellipsis === 'no-ellipsis') {
+            for (let i = 1; i <= count; i += 1) {
+              pages.push(i);
+            }
+          } else {
+            const diameter = isNumeric(ellipsisDiameter) ? ellipsisDiameter : 5;
+            const headSize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
+            const tailSize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
+            const blurSize = isNumeric(ellipsisBlursize) ? ellipsisBlursize : 0;
+            pages = pagination(value, count, {
+              diameter, headSize, tailSize, blurSize,
+            });
+          }
+
           pages.forEach((v) => {
             if (isNumeric(v)) {
               innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}" part="page ${+value === +v ? 'active' : ''}">
                               ${pagesFormatFn && typeof pagesFormatFn === 'function' ? pagesFormatFn(+v) : +v}
                             </button>`;
             } else if (v === '...') {
-              let ellipsis = ELLIPSIS_STYLE_ENUM.default;
-              if (ELLIPSIS_STYLE_ENUM.includes(ellipsisStyle)) {
-                ellipsis = ellipsisStyle;
-              }
-
               const text = ellipsis === 'ellipsis' ? '...' : '';
               innerHTML += `<span part="ellipsis">${text}</span>`;
             }

@@ -1,24 +1,62 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head lang="en">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>shadow-pagination-doc</title>
   <style>
-    #shadow-pagination::part(active) {
-      font-weight: bold;
+    article {
+      width: 600px;
     }
-    #shadow-pagination::part(first),
-    #shadow-pagination::part(previous),
-    #shadow-pagination::part(page),
-    #shadow-pagination::part(next),
-    #shadow-pagination::part(last) {
-      border: none;
-      background-color: #fff;
+    pre {
+      border: 1px solid #333;
+    }
+    .showtime {
+      border: 1px solid #333;
+      padding: 1em;
     }
   </style>
 </head>
 <body>
+  <h1>&lt;shadow-pagination&gt;</h1>
+  <article>
+    <h2>About</h2>
+    <p><code>&lt;shadow-pagination&gt;</code> is a web component created by custom elements, shadow DOM and HTML template APIs. It's non-dependent.</p>
+    <p>The prefix <code>shadow-</code> means nothing, it is because a valid custom element name must contains the "-".</p>
+
+    <h2>Install</h2>
+
+    <h2>Usage</h2>
+    <h3>Default usage</h3>
+    <pre><code>
+      &lt;shadow-pagination&gt;&lt;/shadow-pagination&gt;
+    </code></pre>
+    <div class="showtime">
+      <shadow-pagination></shadow-pagination>
+    </div>
+    <p>What happened? Sure, the pagination must require a total page number, here, it is <code>count</code></p>
+    <pre><code>
+      &lt;shadow-pagination count="12"&gt;&lt;/shadow-pagination&gt;
+    </code></pre>
+    <div class="showtime">
+      <shadow-pagination count="12"></shadow-pagination>
+    </div>
+    <p>bingo!</p>
+
+    <h3>Change the <code>count</code></h3>
+    <ol>
+      <li>HTML attributes.
+        <pre><code>
+
+        </code></pre>
+        <shadow-pagination count="12" id="sp1"></shadow-pagination>
+        sha
+      </li>
+      <li>DOM property.</li>
+    </ol>
+
+    <h2>API</h2>
+  </article>
   <ul>
     <li>是否显示“第一页” @done</li>
     <li>是否显示“最后一页” @done</li>
@@ -34,7 +72,7 @@
     <li>显示省略... @done</li>
     <li>自定义省略符号
       <ul>
-        <li>ellipsis-style [enum] hidden, ellipsis[default] @done</li>
+        <li>ellipsis-style [enum] hidden, ellipsis[default], no-ellipsis @done</li>
         <li>ellipsis-diameter [number] @done</li>
         <li>ellipsis-headsize [number] @done</li>
         <li>ellipsis-tailsize [number] @done</li>
@@ -46,6 +84,11 @@
     <li>用例，测试 @todo</li>
   </ul>
 
+  <p>Bugs:</p>
+  <ul>
+    <li>改变 count 属性时，若新的值小于 value, 则所有页码都会消失。</li>
+  </ul>
+
   <shadow-pagination
     id="shadow-pagination"
     count="20"
@@ -54,7 +97,7 @@
     show-last-button
     next-smart-mode="disabled"
     previous-smart-mode="disabled"
-    ellipsis-style="ellipsis"
+    ellipsis-style="no-ellipsis"
     ellipsis-diameter="5"
     ellipsis-headsize="0"
     ellipsis-tailsize="0"
