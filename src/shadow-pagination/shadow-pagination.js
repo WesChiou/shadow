@@ -1,4 +1,8 @@
 (function () {
+  const SMART_MODE_ENUM = ['hidden', 'disabled'];
+  const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis', 'no-ellipsis'];
+  ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
+
   // https://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric
   function isNumeric(value) {
     return !Number.isNaN(value - parseFloat(value));
@@ -91,10 +95,6 @@
 
     return result;
   }
-
-  const SMART_MODE_ENUM = ['hidden', 'disabled'];
-  const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis', 'no-ellipsis'];
-  ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
 
   class ShadowPagination extends HTMLElement {
     #value = 1;
@@ -243,23 +243,35 @@
     }
 
     get nextSmartMode() {
-      return this.getAttribute('next-smart-mode');
+      const tmp = this.getAttribute('next-smart-mode');
+      return SMART_MODE_ENUM.includes(tmp) ? tmp : '';
     }
 
     set nextSmartMode(v) {
-      this.setAttribute('next-smart-mode', v);
+      if (v === null) {
+        this.removeAttribute('next-smart-mode');
+      } else {
+        this.setAttribute('next-smart-mode', v);
+      }
     }
 
     get previousSmartMode() {
-      return this.getAttribute('previous-smart-mode');
+      const tmp = this.getAttribute('previous-smart-mode');
+      return SMART_MODE_ENUM.includes(tmp) ? tmp : '';
     }
 
     set previousSmartMode(v) {
-      this.setAttribute('previous-smart-mode', v);
+      if (v === null) {
+        this.removeAttribute('previous-smart-mode');
+      } else {
+        this.setAttribute('previous-smart-mode', v);
+      }
     }
 
+    // TODO: 不区分大小写，不包含前后空格
     get ellipsisStyle() {
-      return this.getAttribute('ellipsis-style');
+      const tmp = this.getAttribute('ellipsis-style');
+      return ELLIPSIS_STYLE_ENUM.includes(tmp) ? tmp : ELLIPSIS_STYLE_ENUM.default;
     }
 
     set ellipsisStyle(v) {
@@ -330,30 +342,18 @@
       } = this || {};
 
       function makePreviousButton() {
-        if (hidePreviousButton) {
-          return '';
-        }
-
-        let attr = '';
-        if (SMART_MODE_ENUM.includes(previousSmartMode)) {
-          attr = previousSmartMode;
-        }
-
-        return `<button data-page="previous" data-of="shadow-pagination" part="previous" ${+value === 1 ? attr : ''}>
+        if (hidePreviousButton) return '';
+        return `<button data-page="previous" data-of="shadow-pagination" part="previous" ${+value === 1 ? previousSmartMode : ''}>
                   <slot name="previous">&#706;</slot>
                 </button>`;
       }
 
       function makePages() {
         let innerHTML = '';
-        let ellipsis = ELLIPSIS_STYLE_ENUM.default;
-        if (ELLIPSIS_STYLE_ENUM.includes(ellipsisStyle)) {
-          ellipsis = ellipsisStyle;
-        }
 
         if (isNumeric(count)) {
           let pages = [];
-          if (ellipsis === 'no-ellipsis') {
+          if (ellipsisStyle === 'no-ellipsis') {
             for (let i = 1; i <= count; i += 1) {
               pages.push(i);
             }
@@ -373,7 +373,7 @@
                               ${pagesFormatFn && typeof pagesFormatFn === 'function' ? pagesFormatFn(+v) : +v}
                             </button>`;
             } else if (v === '...') {
-              const text = ellipsis === 'ellipsis' ? '...' : '';
+              const text = ellipsisStyle === 'ellipsis' ? '...' : '';
               innerHTML += `<span part="ellipsis">${text}</span>`;
             }
           });
@@ -382,16 +382,8 @@
       }
 
       function makeNextButton() {
-        if (hideNextButton) {
-          return '';
-        }
-
-        let attr = '';
-        if (SMART_MODE_ENUM.includes(nextSmartMode)) {
-          attr = nextSmartMode;
-        }
-
-        return `<button data-page="next" data-of="shadow-pagination" part="next" ${+value === +count ? attr : ''}>
+        if (hideNextButton) return '';
+        return `<button data-page="next" data-of="shadow-pagination" part="next" ${+value === +count ? nextSmartMode : ''}>
                   <slot name="next">&#707;</slot>
                 </button>`;
       }
