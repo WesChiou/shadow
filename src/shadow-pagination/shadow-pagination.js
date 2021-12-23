@@ -1,27 +1,33 @@
 (function () {
+  const LARGEST_INTEGER = 2147483647;
+  const DEFAULT_COUNT = 1;
+  const DEFAULT_VALUE = 1;
+  const DEFAULT_DIAMETER = 5;
+  const DEFAULT_HEADSIZE = 1;
+  const DEFAULT_TAILSIZE = 1;
+  const DEFAULT_BLURSIZE = 0;
   const SMART_MODE_ENUM = ['hidden', 'disabled'];
   const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis', 'no-ellipsis'];
   ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
+  let propertyValueIsSleeping = true;
 
-  // https://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric
-  function isNumeric(value) {
-    return !Number.isNaN(value - parseFloat(value));
+  // https://stackoverflow.com/questions/10834796/validate-that-a-string-is-a-positive-integer
+  function isNonNegativeInteger(n) {
+    // eslint-disable-next-line
+    return n >>> 0 === parseFloat(n);
   }
 
+  function isPositiveInteger(n) {
+    return isNonNegativeInteger(n) && n > 0;
+  }
+
+  // TODO: diameter can be 1
   function pagination(currentPage, pageCount, {
     diameter = 5,
     headSize = 1,
     tailSize = 1,
     blurSize = 0,
   } = {}) {
-    // https://stackoverflow.com/questions/10834796/validate-that-a-string-is-a-positive-integer
-    function isNonNegativeInteger(n) {
-      // eslint-disable-next-line
-      return n >>> 0 === parseFloat(n);
-    }
-    function isPositiveInteger(n) {
-      return isNonNegativeInteger(n) && n > 0;
-    }
     // validation
     if (!isPositiveInteger(pageCount)
       || !isNonNegativeInteger(currentPage)
@@ -116,8 +122,8 @@
 
         if (!button || button.disabled) return;
 
-        const type = button.dataset.page;
-        switch (type) {
+        const pageValue = button.dataset.page;
+        switch (pageValue) {
           case 'first':
             this.value = 1;
             this.dispatchEvent(new Event('firstpage'));
@@ -135,47 +141,63 @@
             this.dispatchEvent(new Event('lastpage'));
             break;
           default:
-            this.value = +type;
+            this.value = pageValue;
             break;
         }
       });
     }
 
-    get count() {
-      const pagesAttr = this.getAttribute('count');
-      if (isNumeric(pagesAttr)) {
-        return pagesAttr;
+    setPrivateValue(v) {
+      let n = parseInt(v, 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_VALUE || 1;
       }
-      return 0;
-    }
 
-    set count(v) {
-      if (isNumeric(v) && v >= 0) {
-        this.setAttribute('count', v);
+      if (n > this.count) {
+        n = this.circular ? 1 : this.count;
+      } else if (n < 1) {
+        n = this.circular ? this.count : 1;
+      }
+
+      if (this.#value !== n) {
+        this.#value = n;
+        this.dispatchEvent(new Event('change'));
+        this.render();
       }
     }
 
     get value() {
-      return this.#value;
+      return parseInt(this.#value, 10);
     }
 
     set value(v) {
-      if (!isNumeric(v) || !isNumeric(this.count) || +this.#value === +v) {
-        return;
-      }
+      propertyValueIsSleeping = false;
+      this.setPrivateValue(v);
+    }
 
-      if (v > 0 && v <= this.count) {
-        this.#value = +v;
-      } else if (v <= 0 && this.circular) {
-        this.#value = this.count;
-      } else if (v > this.count && this.circular) {
-        this.#value = 1;
-      } else {
-        return; // avoid dispatchEvent and render
-      }
+    // IDL attributes
 
-      this.dispatchEvent(new Event('change'));
-      this.render();
+    get count() {
+      let n = parseInt(this.getAttribute('count'), 10);
+      if (!(isNonNegativeInteger(n) && n >= 1 && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_COUNT || 1;
+      }
+      return n;
+    }
+
+    set count(v) {
+      let n = parseInt(v, 10);
+      if (n === 0) {
+        throw new RangeError('The count cannot be 0.');
+      }
+      if (!(isNonNegativeInteger(n) && n >= 1 && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_COUNT || 1;
+      }
+      this.setAttribute('count', `${n}`);
+
+      if (n < this.value) {
+        this.value = DEFAULT_VALUE;
+      }
     }
 
     get circular() {
@@ -268,7 +290,7 @@
       }
     }
 
-    // TODO: 不区分大小写，不包含前后空格
+    // TODO: Case-insensitive, no leading and tailing space.
     get ellipsisStyle() {
       const tmp = this.getAttribute('ellipsis-style');
       return ELLIPSIS_STYLE_ENUM.includes(tmp) ? tmp : ELLIPSIS_STYLE_ENUM.default;
@@ -278,37 +300,71 @@
       this.setAttribute('ellipsis-style', v);
     }
 
-    // TODO: 属性校验
     get ellipsisDiameter() {
-      return this.getAttribute('ellipsis-diameter');
+      let n = parseInt(this.getAttribute('ellipsis-diameter'), 10);
+      if (!(isNonNegativeInteger(n) && n >= 1 && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_DIAMETER || 1;
+      }
+      return n;
     }
 
     set ellipsisDiameter(v) {
-      this.setAttribute('ellipsis-diameter', v);
+      let n = parseInt(v, 10);
+      if (n === 0) {
+        throw new RangeError('The ellipsis-diameter cannot be 0');
+      }
+      if (!(isNonNegativeInteger(n) && n >= 1 && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_DIAMETER || 1;
+      }
+      this.setAttribute('ellipsis-diameter', `${n}`);
     }
 
     get ellipsisHeadsize() {
-      return this.getAttribute('ellipsis-headsize');
+      let n = parseInt(this.getAttribute('ellipsis-headsize'), 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_HEADSIZE || 0;
+      }
+      return n;
     }
 
     set ellipsisHeadsize(v) {
-      this.setAttribute('ellipsis-headsize', v);
+      let n = parseInt(v, 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_HEADSIZE || 0;
+      }
+      this.setAttribute('ellipsis-headsize', `${n}`);
     }
 
     get ellipsisTailsize() {
-      return this.getAttribute('ellipsis-tailsize');
+      let n = parseInt(this.getAttribute('ellipsis-tailsize'), 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_TAILSIZE || 0;
+      }
+      return n;
     }
 
     set ellipsisTailsize(v) {
-      this.setAttribute('ellipsis-tailsize', v);
+      let n = parseInt(v, 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_TAILSIZE || 0;
+      }
+      this.setAttribute('ellipsis-tailsize', `${n}`);
     }
 
     get ellipsisBlursize() {
-      return this.getAttribute('ellipsis-blursize');
+      let n = parseInt(this.getAttribute('ellipsis-blursize'), 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_BLURSIZE || 0;
+      }
+      return n;
     }
 
     set ellipsisBlursize(v) {
-      this.setAttribute('ellipsis-blursize', v);
+      let n = parseInt(v, 10);
+      if (!(isNonNegativeInteger(n) && n <= LARGEST_INTEGER)) {
+        n = DEFAULT_BLURSIZE || 0;
+      }
+      this.setAttribute('ellipsis-blursize', `${n}`);
     }
 
     get pagesFormatFn() {
@@ -316,12 +372,11 @@
     }
 
     set pagesFormatFn(fn) {
-      if (!fn || typeof fn !== 'function') {
-        return;
-      }
       this.#pagesFormatFn = fn;
       this.render();
     }
+
+    // Render methods
 
     render() {
       const {
@@ -343,47 +398,44 @@
 
       function makePreviousButton() {
         if (hidePreviousButton) return '';
-        return `<button data-page="previous" data-of="shadow-pagination" part="previous" ${+value === 1 ? previousSmartMode : ''}>
+        return `<button data-page="previous" data-of="shadow-pagination" part="previous" ${value === 1 ? previousSmartMode : ''}>
                   <slot name="previous">&#706;</slot>
                 </button>`;
       }
 
       function makePages() {
-        let innerHTML = '';
-
-        if (isNumeric(count)) {
-          let pages = [];
-          if (ellipsisStyle === 'no-ellipsis') {
-            for (let i = 1; i <= count; i += 1) {
-              pages.push(i);
-            }
-          } else {
-            const diameter = isNumeric(ellipsisDiameter) ? ellipsisDiameter : 5;
-            const headSize = isNumeric(ellipsisHeadsize) ? ellipsisHeadsize : 1;
-            const tailSize = isNumeric(ellipsisTailsize) ? ellipsisTailsize : 1;
-            const blurSize = isNumeric(ellipsisBlursize) ? ellipsisBlursize : 0;
-            pages = pagination(value, count, {
-              diameter, headSize, tailSize, blurSize,
-            });
+        let pages = [];
+        if (ellipsisStyle === 'no-ellipsis') {
+          for (let i = 1; i <= count; i += 1) {
+            pages.push(i);
           }
-
-          pages.forEach((v) => {
-            if (isNumeric(v)) {
-              innerHTML += `<button data-page="${v}" class="page ${+value === +v ? 'active' : ''}" part="page ${+value === +v ? 'active' : ''}">
-                              ${pagesFormatFn && typeof pagesFormatFn === 'function' ? pagesFormatFn(+v) : +v}
-                            </button>`;
-            } else if (v === '...') {
-              const text = ellipsisStyle === 'ellipsis' ? '...' : '';
-              innerHTML += `<span part="ellipsis">${text}</span>`;
-            }
+        } else {
+          pages = pagination(value, count, {
+            diameter: ellipsisDiameter,
+            headSize: ellipsisHeadsize,
+            tailSize: ellipsisTailsize,
+            blurSize: ellipsisBlursize,
           });
         }
+
+        let innerHTML = '';
+        pages.forEach((v) => {
+          const n = parseInt(v, 10);
+          if (v === '...') {
+            const text = ellipsisStyle === 'ellipsis' ? '...' : '';
+            innerHTML += `<span part="ellipsis">${text}</span>`;
+          } else if (isNonNegativeInteger(n)) {
+            innerHTML += `<button data-page="${n}" class="page ${value === n ? 'active' : ''}" part="page ${value === n ? 'active' : ''}">
+                            ${typeof pagesFormatFn === 'function' ? pagesFormatFn(n) : n}
+                          </button>`;
+          }
+        });
         return innerHTML;
       }
 
       function makeNextButton() {
         if (hideNextButton) return '';
-        return `<button data-page="next" data-of="shadow-pagination" part="next" ${+value === +count ? nextSmartMode : ''}>
+        return `<button data-page="next" data-of="shadow-pagination" part="next" ${value === count ? nextSmartMode : ''}>
                   <slot name="next">&#707;</slot>
                 </button>`;
       }
@@ -397,7 +449,7 @@
         <div>
           ${showFirstButton ? '<button data-page="first" data-of="shadow-pagination" part="first"><slot name="first">&larrb;</slot></button>' : ''}
           ${makePreviousButton()}
-          ${makePages()}⁨⁨
+          ${makePages()}
           ${makeNextButton()}
           ${showLastButton ? '<button data-page="last" data-of="shadow-pagination" part="last"><slot name="last">&rarrb;</slot></button>' : ''}
         </div>
@@ -411,28 +463,33 @@
       return [
         'count',
         'value',
-        'show-first-button',
-        'show-last-button',
-        'hide-previous-button',
-        'hide-next-button',
-        'next-smart-mode',
-        'previous-smart-mode',
-        'ellipsis-style',
-        'ellipsis-diameter',
-        'ellipsis-headsize',
-        'ellipsis-tailsize',
-        'ellipsis-blursize',
+        'show-first-button', // reflect to showFirstButton
+        'show-last-button', // reflect to showLastButton
+        'hide-previous-button', // reflect to hidePreviousButton
+        'hide-next-button', // reflect to hideNextButton
+        'next-smart-mode', // reflect to nextSmartMode
+        'previous-smart-mode', // reflect to previousSmartMode
+        'ellipsis-style', // reflect to ellipsisStyle
+        'ellipsis-diameter', // reflect to ellipsisDiameter
+        'ellipsis-headsize', // reflect to ellipsisHeadsize
+        'ellipsis-tailsize', // reflect to ellipsisTailsize
+        'ellipsis-blursize', // reflect to ellipsisBlursize
       ];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
       if (name === 'value') {
-        this.value = newValue;
+        if (propertyValueIsSleeping) {
+          this.setPrivateValue(newValue);
+        }
+        return;
       }
 
-      if (oldValue !== newValue) {
-        this.render();
+      if (oldValue === newValue) {
+        return;
       }
+
+      this.render();
     }
   }
 
