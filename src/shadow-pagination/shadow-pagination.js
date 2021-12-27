@@ -10,6 +10,7 @@
   const ELLIPSIS_STYLE_ENUM = ['hidden', 'ellipsis', 'no-ellipsis'];
   ELLIPSIS_STYLE_ENUM.default = 'ellipsis';
   let propertyValueIsSleeping = true;
+  let isConnected = false;
 
   // https://stackoverflow.com/questions/10834796/validate-that-a-string-is-a-positive-integer
   function isNonNegativeInteger(n) {
@@ -21,7 +22,6 @@
     return isNonNegativeInteger(n) && n > 0;
   }
 
-  // TODO: diameter can be 1
   function pagination(currentPage, pageCount, {
     diameter = 5,
     headSize = 1,
@@ -31,19 +31,17 @@
     // validation
     if (!isPositiveInteger(pageCount)
       || !isNonNegativeInteger(currentPage)
-      || parseInt(currentPage, 10) > parseInt(pageCount, 10)
+      || +currentPage > +pageCount
     ) {
       return [];
     }
     // correct parameters
-    const CURR = parseInt(currentPage, 10);
-    const COUNT = parseInt(pageCount, 10);
-    const DIAMETER = isPositiveInteger(diameter) && diameter <= COUNT && diameter > 1
-      ? +diameter
-      : 5;
-    const HEADSIZE = isNonNegativeInteger(headSize) && headSize <= COUNT ? +headSize : 1;
-    const TAILSIZE = isNonNegativeInteger(tailSize) && tailSize <= COUNT ? +tailSize : 1;
-    const BLURSIZE = isNonNegativeInteger(blurSize) && blurSize <= COUNT ? +blurSize : 0;
+    const CURR = +currentPage;
+    const COUNT = +pageCount;
+    const DIAMETER = isPositiveInteger(diameter) ? Math.min(+diameter, COUNT) : 5;
+    const HEADSIZE = isNonNegativeInteger(headSize) ? Math.min(+headSize, COUNT) : 1;
+    const TAILSIZE = isNonNegativeInteger(tailSize) ? Math.min(+tailSize, COUNT) : 1;
+    const BLURSIZE = isNonNegativeInteger(blurSize) ? Math.min(+blurSize, COUNT) : 0;
 
     const FIRST = 1;
     const radius = Math.floor(DIAMETER / 2);
@@ -222,7 +220,6 @@
       } else {
         this.removeAttribute('show-first-button');
       }
-      this.render();
     }
 
     get showLastButton() {
@@ -235,7 +232,6 @@
       } else {
         this.removeAttribute('show-last-button');
       }
-      this.render();
     }
 
     get hidePreviousButton() {
@@ -248,7 +244,6 @@
       } else {
         this.removeAttribute('hide-previous-button');
       }
-      this.render();
     }
 
     get hideNextButton() {
@@ -261,7 +256,6 @@
       } else {
         this.removeAttribute('hide-next-button');
       }
-      this.render();
     }
 
     get nextSmartMode() {
@@ -463,17 +457,17 @@
       return [
         'count',
         'value',
-        'show-first-button', // reflect to showFirstButton
-        'show-last-button', // reflect to showLastButton
-        'hide-previous-button', // reflect to hidePreviousButton
-        'hide-next-button', // reflect to hideNextButton
-        'next-smart-mode', // reflect to nextSmartMode
-        'previous-smart-mode', // reflect to previousSmartMode
-        'ellipsis-style', // reflect to ellipsisStyle
-        'ellipsis-diameter', // reflect to ellipsisDiameter
-        'ellipsis-headsize', // reflect to ellipsisHeadsize
-        'ellipsis-tailsize', // reflect to ellipsisTailsize
-        'ellipsis-blursize', // reflect to ellipsisBlursize
+        'show-first-button',
+        'show-last-button',
+        'hide-previous-button',
+        'hide-next-button',
+        'next-smart-mode',
+        'previous-smart-mode',
+        'ellipsis-style',
+        'ellipsis-diameter',
+        'ellipsis-headsize',
+        'ellipsis-tailsize',
+        'ellipsis-blursize',
       ];
     }
 
@@ -485,10 +479,13 @@
         return;
       }
 
-      if (oldValue === newValue) {
-        return;
+      if (oldValue !== newValue && isConnected) {
+        this.render();
       }
+    }
 
+    connectedCallback() {
+      isConnected = true;
       this.render();
     }
   }
